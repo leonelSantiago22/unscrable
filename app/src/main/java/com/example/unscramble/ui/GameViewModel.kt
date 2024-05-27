@@ -36,7 +36,8 @@ class GameViewModel : ViewModel() {
     // Game UI state
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
-
+    private var helpUsed = false
+    private var consecutiveCorrectGuesses = 0
     var userGuess by mutableStateOf("")
         private set
 
@@ -54,8 +55,17 @@ class GameViewModel : ViewModel() {
     fun resetGame() {
         usedWords.clear()
         _uiState.value = GameUiState(currentScrambledWord = pickRandomWordAndShuffle())
+        helpUsed = false
+        consecutiveCorrectGuesses = 0
     }
 
+    fun provideHelp()
+    {
+        helpUsed = true
+        val halfLength = currentWord.length / 2
+        val helpText = currentWord.substring(0, halfLength)
+        updateUserGuess(helpText)
+    }
     /*
      * Update the user's guess
      */
@@ -69,12 +79,30 @@ class GameViewModel : ViewModel() {
      */
     fun checkUserGuess() {
         if (userGuess.equals(currentWord, ignoreCase = true)) {
-            // User's guess is correct, increase the score
-            // and call updateGameState() to prepare the game for next round
-            val updatedScore = _uiState.value.score.plus(SCORE_INCREASE)
-            updateGameState(updatedScore)
+            val scoreIncrement = if (helpUsed) SCORE_INCREASE / 2 else SCORE_INCREASE
+            val updatedScore = _uiState.value.score.plus(scoreIncrement)
+
+            if (!helpUsed) {
+                consecutiveCorrectGuesses++
+                if (consecutiveCorrectGuesses == 2) {
+                    consecutiveCorrectGuesses = 0
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            score = updatedScore + 50,
+                            showBonusScoreDialog = true
+                        )
+                    }
+                } else {
+                    updateGameState(updatedScore)
+                }
+            } else {
+                consecutiveCorrectGuesses = 0
+                updateGameState(updatedScore)
+            }
+
+            helpUsed = false // Reset helpUsed for the next round
         } else {
-            // User's guess is wrong, show an error
+            consecutiveCorrectGuesses = 0
             _uiState.update { currentState ->
                 currentState.copy(isGuessedWordWrong = true)
             }
@@ -82,7 +110,12 @@ class GameViewModel : ViewModel() {
         // Reset user guess
         updateUserGuess("")
     }
-
+    fun closeBonusScoreDialog() {
+        _uiState.update { currentState ->
+            currentState.copy(showBonusScoreDialog = false)
+        }
+        updateGameState(_uiState.value.score)
+    }
     /*
      * Skip to next word
      */

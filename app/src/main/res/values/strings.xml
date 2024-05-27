@@ -27,4 +27,8 @@
     <string name="exit">Exit</string>
     <string name="play_again">Play Again</string>
     <string name="wrong_guess">Wrong Guess!</string>
+    <string name="help">Help</string>
+    <string name="bonus_score">50 extra points!</string>
+    <string name="bonus_score_message">Congrats for your extra points!</string>
+    <string name="ok">Ok</string>
 </resources>
