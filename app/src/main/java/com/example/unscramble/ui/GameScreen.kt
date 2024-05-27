@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -25,6 +26,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -57,11 +59,24 @@ fun GameScreen(gameViewModel: GameViewModel = viewModel()) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
+        
         Text(
-            text = stringResource(R.string.app_name),
-            style = typography.titleLarge,
+        text = stringResource(R.string.app_name),
+        style = typography.titleLarge,
         )
+        GameStatus(score = gameUiState.score, modifier = Modifier.padding(20.dp))
+
+        if (gameUiState.isGameOver) {
+            FinalScoreDialog(
+                score = gameUiState.score,
+                onPlayAgain = { gameViewModel.resetGame() }
+            )
+        }
+
+        if (gameUiState.showBonusScoreDialog) {
+            BonusScoreDialog(onDismiss = { gameViewModel.closeBonusScoreDialog() })
+        }
+
         GameLayout(
             onUserGuessChanged = { gameViewModel.updateUserGuess(it) },
             wordCount = gameUiState.currentWordCount,
@@ -81,7 +96,15 @@ fun GameScreen(gameViewModel: GameViewModel = viewModel()) {
             verticalArrangement = Arrangement.spacedBy(mediumPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { gameViewModel.checkUserGuess() }
+            ) {
+                Text(
+                    text = stringResource(R.string.submit),
+                    fontSize = 16.sp
+                )
+            }
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { gameViewModel.provideHelp() }
@@ -92,15 +115,7 @@ fun GameScreen(gameViewModel: GameViewModel = viewModel()) {
                 )
             }
 
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { gameViewModel.checkUserGuess() }
-            ) {
-                Text(
-                    text = stringResource(R.string.submit),
-                    fontSize = 16.sp
-                )
-            }
+
 
             OutlinedButton(
                 onClick = { gameViewModel.skipWord() },
@@ -113,18 +128,7 @@ fun GameScreen(gameViewModel: GameViewModel = viewModel()) {
             }
         }
 
-        GameStatus(score = gameUiState.score, modifier = Modifier.padding(20.dp))
 
-        if (gameUiState.isGameOver) {
-            FinalScoreDialog(
-                score = gameUiState.score,
-                onPlayAgain = { gameViewModel.resetGame() }
-            )
-        }
-
-        if (gameUiState.showBonusScoreDialog) {
-            BonusScoreDialog(onDismiss = { gameViewModel.closeBonusScoreDialog() })
-        }
     }
 }
 
@@ -185,7 +189,7 @@ fun GameLayout(
                     .align(alignment = Alignment.End),
                 text = stringResource(R.string.word_count, wordCount),
                 style = typography.titleMedium,
-                color = colorScheme.onPrimary
+                color = colorScheme.onSecondary
             )
             Text(
                 text = currentScrambledWord,
